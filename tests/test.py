@@ -1,12 +1,12 @@
 from src import pychasing
 
 
-TOKEN              = "6UvjIbr50rA5hQDQAYYsXjv5NSRK7Fq1SqcRhala"
-STEAM_ID           = "76561198161985105"
+TOKEN              = ""
+STEAM_ID           = ""
 REPLAY_PATH        = "test_replay.replay"
 GROUP_NAME         = "__pychasing_test_group__"
 REPLAY_NAME        = "__pychasing_test_replay__"
-UPLOADED_REPLAY_ID = "6387e5dc-d93c-4714-ab48-73748c9df6c6"
+UPLOADED_REPLAY_ID = ""
 
 
 pychasing_client = pychasing.Client(
