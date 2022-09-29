@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pychasing"
+version = "0.0.1"
+authors = [
+    { name = "Tanner B. Corcoran", email = "tannerbcorcoran@gmail.com" },
+]
+description = "A full-functionality wrapper for the https://ballchasing.com API"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests >= 2.27.1",
+    "web-fetch >= 0.0.4",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/tanrbobanr/pychasing"
