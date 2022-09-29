@@ -9,7 +9,6 @@ REPLAY_NAME        = "__pychasing_test_replay__"
 UPLOADED_REPLAY_ID = "6387e5dc-d93c-4714-ab48-73748c9df6c6"
 
 
-
 pychasing_client = pychasing.Client(
     TOKEN,
     True,
@@ -35,7 +34,6 @@ pychasing_client = pychasing.Client(
 # delete_replay
 # delete_group
 # experimentals (get_threejs, get_timeline, export_csv)
-
 
 
 def test_ping() -> None:

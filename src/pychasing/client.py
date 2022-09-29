@@ -902,6 +902,7 @@ class Client:
     def get_threejs(
         replay_id   : str,
         *,
+        cookie      : str = ...,
         print_error : bool = True
     ) -> requests.Response:
         """Get basic locational, rotational, and timestamp data from a given replay on
@@ -914,6 +915,10 @@ class Client:
         ----------
         replay_id : str
             The ID of the replay that is present in ballchasing's system.
+        cookie : str, optional
+            Not required, but if provided, you are able to use this method on private
+            replays so long as they belong to the cookie-holder's account on
+            ballchasing.
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the
             request resulted in an HTTP error (i.e. status codes 400 through 599).
@@ -938,6 +943,9 @@ class Client:
             paths=["dyn", "replay", replay_id, "threejs"]
         )
         
+        # set request kwargs
+        prepped.request_kwargs["headers", "Cookie"] = cookie
+        
         # make request, print error, and return response
         response = prepped.get()
         if print_error:
@@ -949,6 +957,7 @@ class Client:
     def get_timeline(
         replay_id   : str,
         *,
+        cookie      : str = ...,
         print_error : bool = True
     ) -> requests.Response:
         """Get basic timeline data from a replay on https://ballchasing.com.
@@ -960,6 +969,10 @@ class Client:
         ----------
         replay_id : str
             The ID of the replay that is present in ballchasing's system.
+        cookie : str, optional
+            Not required, but if provided, you are able to use this method on private
+            replays so long as they belong to the cookie-holder's account on
+            ballchasing.
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the
             request resulted in an HTTP error (i.e. status codes 400 through 599).
@@ -983,6 +996,9 @@ class Client:
             paths=["dyn", "replay", replay_id, "timeline"]
         )
         
+        # set request kwargs
+        prepped.request_kwargs["headers", "Cookie"] = cookie
+        
         # make request, print error, and return response
         response = prepped.get()
         if print_error:
@@ -995,6 +1011,7 @@ class Client:
         group_id    : str,
         stat        : str,
         *,
+        cookie      : str = ...,
         print_error : bool = True
     ) -> requests.Response:
         """Get group statistics from a group on https://ballchasing.com.
@@ -1010,6 +1027,10 @@ class Client:
             The stat section (players, teams, players games, teams games) to export.
             Keywords for this variable can be accessed through the
             pychasing.types.GroupStats class.
+        cookie : str, optional
+            Not required, but if provided, you are able to use this method on private
+            replays so long as they belong to the cookie-holder's account on
+            ballchasing.
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the
             request resulted in an HTTP error (i.e. status codes 400 through 599).
@@ -1027,6 +1048,9 @@ class Client:
             paths=["dl", "stats", f"group-{stat}", group_id, f"{group_id}-{stat}.csv"]
         )
         
+        # set request kwargs
+        prepped.request_kwargs["headers", "Cookie"] = cookie
+
         # make request, print error, and return response
         response = prepped.get()
         if print_error:
