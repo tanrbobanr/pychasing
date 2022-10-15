@@ -46,15 +46,15 @@ The `pychasing.Client` object has the below methods:
     - NOTE: this functionality is highly experimental. It accesses a back-end API used for populating site data (that notably does not require authorization headers). At any time, this API could become restricted or its functionality could change.
 - `export_csv` - get group statistics formatted as semi-colon-separated values.
 # Helper types
-- **`pychasing.types.Rank`** - represents an in-game rank (`Unranked` to `SSL`).
-- **`pychasing.types.Playlist`** - represents an in-game playlist, e.g. `Hoops`, `Rumble`, `Ranked Duels`.
-- **`pychasing.types.Platform`** - represents the current playable platforms (`Steam`, `Epic`, `XBox`, `PlayStation`, `Switch`).
-- **`pychasing.types.Map`** - represents an in-game map, e.g. `Starbase Arc`, `arc_p`.
-- **`pychasing.types.PatreonTier`** - represents a patreon tier for `ballchasing`'s patreon. Tiers include `GrandChampion`, `Champion`, `Diamond`, `Gold`, and ``Regular` (no patreon tier).
-- **`pychasing.types.Visibility`** - represents the visibility of a replay or group, i.e. `public`, `unlisted`, and `private`.
-- **`pychasing.types.PlayerIdentification`** - represents a type of player identification for groups, i.e. `by id` and `by name`.
-- **`pychasing.types.TeamIdentification`** - represents a type of team identification for groups, i.e. `by distinct players` and `by player clusters`.
-- **`pychasing.types.MatchResult`** - represents a result of a match, i.e. `win` or `loss`
-- **`pychasing.types.SortBy`** - represents a sorting method, e.g. `replay date`, `group creation date`, `group name`.
-- **`pychasing.types.SortDir`** - represents a sort direction, i.e. `ascending` and `descending`.
-- **`pychasing.types.GroupStats`** - represents a stat group when exporting CSV, e.g. `players`, `teams`.
+- **`pychasing.types.Rank`** - represents an in-game rank (**Unranked** to **SSL**).
+- **`pychasing.types.Playlist`** - represents an in-game playlist, e.g. **Hoops**, **Rumble**, **Ranked Duels**.
+- **`pychasing.types.Platform`** - represents the current playable platforms (**Steam**, **Epic**, **XBox**, **PlayStation**, **Switch**).
+- **`pychasing.types.Map`** - represents an in-game map, e.g. **Starbase Arc**, **arc_p**.
+- **`pychasing.types.PatreonTier`** - represents a patreon tier for Ballchasing's Patreon. Tiers include **Grand Champion**, **Champion**, **Diamond**, **Gold**, and **Regular** (no patreon tier).
+- **`pychasing.types.Visibility`** - represents the visibility of a replay or group, i.e. **public**, **unlisted**, and **private**.
+- **`pychasing.types.PlayerIdentification`** - represents a type of player identification for groups, i.e. **by id** and **by name**.
+- **`pychasing.types.TeamIdentification`** - represents a type of team identification for groups, i.e. **by distinct players** and **by player clusters**.
+- **`pychasing.types.MatchResult`** - represents a result of a match, i.e. **win** or **loss**
+- **`pychasing.types.SortBy`** - represents a sorting method, e.g. **replay date`, **group creation date**, **group name**.
+- **`pychasing.types.SortDir`** - represents a sort direction, i.e. **ascending** and **descending**.
+- **`pychasing.types.GroupStats`** - represents a stat group when exporting CSV, e.g. **players**, **teams**.
