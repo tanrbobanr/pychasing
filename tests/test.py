@@ -1,9 +1,11 @@
+import sys
+sys.path.append(".")
 from src import pychasing
 
 
 TOKEN              = ""
 STEAM_ID           = ""
-REPLAY_PATH        = "test_replay.replay"
+REPLAY_PATH        = "tests/test_replay.replay"
 GROUP_NAME         = "__pychasing_test_group__"
 REPLAY_NAME        = "__pychasing_test_replay__"
 UPLOADED_REPLAY_ID = ""
@@ -14,26 +16,6 @@ pychasing_client = pychasing.Client(
     True,
     pychasing.types.PatreonTier.Regular
 )
-
-
-# ORDER OF OPERATIONS
-# ping
-# list_replays
-# list_groups
-# maps
-# create_group
-# upload_replay (to new group)
-# get_replay
-# get_group
-# patch_group
-# patch_replay
-# download_replay
-# get_threejs
-# get_timeline
-# export_csv
-# delete_replay
-# delete_group
-# experimentals (get_threejs, get_timeline, export_csv)
 
 
 def test_ping() -> None:
@@ -140,13 +122,13 @@ def test_download_replay() -> None:
 def test_experimentals() -> None:
     res0 = pychasing_client.get_threejs(UPLOADED_REPLAY_ID)
     print(res0.content[:100])
-    input("Press any key to continue...")
+    input("\033[92mPress any key to continue...\033[0m")
     res1 = pychasing_client.get_timeline(UPLOADED_REPLAY_ID)
-    print(res1.content)
-    input("Press any key to continue...")
+    print(res1.content[:100])
+    input("\033[92mPress any key to continue...\033[0m")
     groups = pychasing_client.list_groups(name=GROUP_NAME, creator=STEAM_ID)
     res2 = pychasing_client.export_csv(groups.json()["list"][0]["id"], pychasing.types.GroupStats.PLAYERS)
-    print(res2.content)
+    print(res2.content[:100])
 
 
 def test_delete_replay() -> None:
@@ -165,7 +147,7 @@ def test_delete_group() -> None:
 
 
 if __name__ == "__main__":
-    step = 13
+    step = 1
     match step:
         case 0: test_ping()
         case 1: test_list_replays()

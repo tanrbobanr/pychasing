@@ -9,7 +9,7 @@ __license__ = "MIT License"
 __copyright__ = "Copyright (c) 2022-present Tanner B. Corcoran"
 
 
-import requests, typing, time, datetime, typing, webfetch
+import requests, typing, time, datetime, typing, httpprep, prepr
 from . import constants, types
 
 
@@ -70,6 +70,10 @@ class Client:
         }
     
 
+    def __repr__(self) -> prepr.types.prepr_str:
+        return prepr.prepr(self).args(self._token, self._auto_rate_limit, self._patreon_tier).build()
+    
+
     def ping(
         self,
         *,
@@ -89,18 +93,20 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare URL
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api"]
+            top_level_domain="com",
+            path_segments=["api"]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
         
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
@@ -135,26 +141,21 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare URL
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "v2", "upload"]
+            top_level_domain="com",
+            path_segments=["api", "v2", "upload"]
         )
-        prepped.parameters[
-            "visibility",
-            "group"
-        ] = (
-            visibility,
-            group
-        )
+        prepped_url.components.queries["visibility", "group"] = [visibility, group]
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
-        prepped.request_kwargs["files", "file"] = file
-
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+        
         # make request, print error, and return response
-        response = prepped.post()
+        response = requests.post(prepped_url.build(query_check=...), headers=prepped_headers.format_dict(), files={"file":file})
         if print_error:
             _print_error(response)
         return response
@@ -267,18 +268,24 @@ class Client:
         """
         if count != ... and 1 > count > 200:
             raise ValueError("\"count\" must be between 1 and 200")
-        
-        # prepare URL portion of request
+
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+
+        # make request
         if next != ...:
-            prepped = webfetch.PreparedFetch()
-            prepped.url = next
-        if next == ...:
-            prepped = webfetch.PreparedFetch(
-                subdomain=None,
+            # set url
+            url = next
+        else:
+            # prepare url
+            prepped_url = httpprep.URL(
+                protocol="https",
                 domain="ballchasing",
-                paths=["api", "replays"]
+                top_level_domain="com",
+                path_segments=["api", "replays"]
             )
-            prepped.parameters[
+            prepped_url.components.queries[
                 "title",
                 "playlist",
                 "season",
@@ -296,7 +303,7 @@ class Client:
                 "count",
                 "sort-by",
                 "sort-dir"
-            ] = (
+            ] = [
                 title,
                 playlist,
                 season,
@@ -314,24 +321,20 @@ class Client:
                 count,
                 sort_by,
                 sort_dir
-            )
+            ]
             if player_names != ...:
                 for name in player_names:
-                    prepped.parameters["player-name"] = name
+                    prepped_url.components.queries["player-name"] = name
             if player_ids != ...:
                 for platform, id in player_ids:
-                    prepped.parameters["player-id"] = f"{platform}:{id}"
-
-
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
-
+                    prepped_url.components.queries["player-id"] = f"{platform}:{id}"
+            url = prepped_url.build(query_check=...)
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.LIST_REPLAYS] = _rate_limit(self._call_timestamps[constants.OPERATION.LIST_REPLAYS], self._patreon_tier.LIST_REPLAYS)
 
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(url, headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
@@ -359,26 +362,28 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "replays", replay_id]
+            top_level_domain="com",
+            path_segments=["api", "replays", replay_id]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.GET_REPLAY] = _rate_limit(self._call_timestamps[constants.OPERATION.GET_REPLAY], self._patreon_tier.GET_REPLAY)
 
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
-
+        
 
     def delete_replay(
         self,
@@ -403,26 +408,28 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "replays", replay_id]
+            top_level_domain="com",
+            path_segments=["api", "replays", replay_id]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.DELETE_REPLAY] = _rate_limit(self._call_timestamps[constants.OPERATION.DELETE_REPLAY], self._patreon_tier.DELETE_REPLAY)
 
         # make request, print error, and return response
-        response = prepped.delete()
+        response = requests.delete(prepped_url.build(), headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
-    
+        
 
     def patch_replay(
         self, 
@@ -458,25 +465,28 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "replays", replay_id]
+            top_level_domain="com",
+            path_segments=["api", "replays", replay_id]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
-        prepped.request_kwargs["json", "title"] = title
-        prepped.request_kwargs["json", "visibility"] = visibility
-        prepped.request_kwargs["json", "group"] = group
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+
+        # prepare payload
+        payload = httpprep.OverloadDict()
+        payload["title", "visibility", "group"] = [title, visibility, group]
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.PATCH_REPLAY] = _rate_limit(self._call_timestamps[constants.OPERATION.PATCH_REPLAY], self._patreon_tier.PATCH_REPLAY)
 
         # make request, print error, and return response
-        response = prepped.patch()
+        response = requests.patch(prepped_url.build(), headers=prepped_headers.format_dict(), json=payload.remove_values(...).to_dict())
         if print_error:
             _print_error(response)
         return response
@@ -513,23 +523,24 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "replays", replay_id, "file"]
+            top_level_domain="com",
+            path_segments=["api", "replays", replay_id, "file"]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
-        prepped.request_kwargs["stream"] = True
-        
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.DOWNLOAD_REPLAY] = _rate_limit(self._call_timestamps[constants.OPERATION.DOWNLOAD_REPLAY], self._patreon_tier.DOWNLOAD_REPLAY)
 
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict(), stream=True)
         if print_error:
             _print_error(response)
         return response
@@ -572,31 +583,32 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "groups"]
+            top_level_domain="com",
+            path_segments=["api", "groups"]
         )
+
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+
+        # prepare payload
+        payload = httpprep.OverloadDict()
+        payload["name", "player_identification", "team_identification", "parent"] = [name, player_identification, team_identification, parent]
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.CREATE_GROUP] = _rate_limit(self._call_timestamps[constants.OPERATION.CREATE_GROUP], self._patreon_tier.CREATE_GROUP)
 
-
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
-        prepped.request_kwargs["json", "name"] = name
-        prepped.request_kwargs["json", "player_identification"] = player_identification
-        prepped.request_kwargs["json", "team_identification"] = team_identification
-        prepped.request_kwargs["json", "parent"] = parent
-
         # make request, print error, and return response
-        response = prepped.post()
+        response = requests.post(prepped_url.build(), headers=prepped_headers.format_dict(), json=payload.remove_values(...).to_dict())
         if print_error:
             _print_error(response)
         return response
-
+        
 
     def list_groups(
         self,
@@ -663,17 +675,23 @@ class Client:
         if count != ... and 1 > count > 200:
             raise ValueError("\"count\" must be between 1 and 200")
         
-        # prepare URL portion of request
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+
+        # make request
         if next != ...:
-            prepped = webfetch.PreparedFetch()
-            prepped.url = next
-        if next == ...:
-            prepped = webfetch.PreparedFetch(
-                subdomain=None,
+            # set url
+            url = next
+        else:
+            # prepare url
+            prepped_url = httpprep.URL(
+                protocol="https",
                 domain="ballchasing",
-                paths=["api", "groups"]
+                top_level_domain="com",
+                path_segments=["api", "groups"]
             )
-            prepped.parameters[
+            prepped_url.components.queries[
                 "name",
                 "creator",
                 "group",
@@ -682,7 +700,7 @@ class Client:
                 "count",
                 "sort-by",
                 "sort-dir"
-            ] = (
+            ] = [
                 name,
                 creator,
                 group,
@@ -691,17 +709,15 @@ class Client:
                 count,
                 sort_by,
                 sort_dir
-            )
-
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
+            ]
+            url = prepped_url.build(query_check=...)
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.LIST_GROUPS] = _rate_limit(self._call_timestamps[constants.OPERATION.LIST_GROUPS], self._patreon_tier.LIST_GROUPS)
 
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(url, headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
@@ -729,22 +745,24 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "groups", group_id]
+            top_level_domain="com",
+            path_segments=["api", "groups", group_id]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.GET_GROUP] = _rate_limit(self._call_timestamps[constants.OPERATION.GET_GROUP], self._patreon_tier.GET_GROUP)
 
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
@@ -773,22 +791,24 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "groups", group_id]
+            top_level_domain="com",
+            path_segments=["api", "groups", group_id]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.DELETE_GROUP] = _rate_limit(self._call_timestamps[constants.OPERATION.DELETE_GROUP], self._patreon_tier.DELETE_GROUP)
 
         # make request, print error, and return response
-        response = prepped.delete()
+        response = requests.delete(prepped_url.build(), headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
@@ -837,26 +857,28 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "groups", group_id]
+            top_level_domain="com",
+            path_segments=["api", "groups", group_id]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
-        prepped.request_kwargs["json", "player_identification"] = player_identification
-        prepped.request_kwargs["json", "team_identification"] = team_identification
-        prepped.request_kwargs["json", "parent"] = parent
-        prepped.request_kwargs["json", "shared"] = shared
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+
+        # prepare payload
+        payload = httpprep.OverloadDict()
+        payload["player_identification", "team_identification", "parent", "shared"] = [player_identification, team_identification, parent, shared]
 
         # rate limit if enabled
         if self._auto_rate_limit:
             self._call_timestamps[constants.OPERATION.PATCH_GROUP] = _rate_limit(self._call_timestamps[constants.OPERATION.PATCH_GROUP], self._patreon_tier.PATCH_GROUP)
 
         # make request, print error, and return response
-        response = prepped.patch()
+        response = requests.patch(prepped_url.build(), headers=prepped_headers.format_dict(), json=payload.remove_values(...).to_dict())
         if print_error:
             _print_error(response)
         return response
@@ -881,18 +903,20 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
 
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["api", "maps"]
+            top_level_domain="com",
+            path_segments=["api", "maps"]
         )
 
-        # add request kwargs
-        prepped.request_kwargs["headers", "Authorization"] = self._token
-        
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Authorization = self._token
+
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
@@ -936,18 +960,20 @@ class Client:
         any time, this API could become restricted or its functionality could change.
 
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["dyn", "replay", replay_id, "threejs"]
+            top_level_domain="com",
+            path_segments=["dyn", "replay", replay_id, "threejs"]
         )
-        
-        # set request kwargs
-        prepped.request_kwargs["headers", "Cookie"] = cookie
-        
+
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Cookie = cookie
+
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict(...))
         if print_error:
             _print_error(response)
         return response
@@ -989,18 +1015,20 @@ class Client:
         any time, this API could become restricted or its functionality could change.
         
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["dyn", "replay", replay_id, "timeline"]
+            top_level_domain="com",
+            path_segments=["dyn", "replay", replay_id, "timeline"]
         )
-        
-        # set request kwargs
-        prepped.request_kwargs["headers", "Cookie"] = cookie
-        
+
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Cookie = cookie
+
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict(...))
         if print_error:
             _print_error(response)
         return response
@@ -1041,18 +1069,20 @@ class Client:
             The `requests.Response` object returned from the HTTP request.
 
         """
-        # prepare URL portion of request
-        prepped = webfetch.PreparedFetch(
-            subdomain=None,
+        # prepare url
+        prepped_url = httpprep.URL(
+            protocol="https",
             domain="ballchasing",
-            paths=["dl", "stats", f"group-{stat}", group_id, f"{group_id}-{stat}.csv"]
+            top_level_domain="com",
+            path_segments=["dl", "stats", f"group-{stat}", group_id, f"{group_id}-{stat}.csv"]
         )
-        
-        # set request kwargs
-        prepped.request_kwargs["headers", "Cookie"] = cookie
+
+        # prepare headers
+        prepped_headers = httpprep.Headers()
+        prepped_headers.Cookie = cookie
 
         # make request, print error, and return response
-        response = prepped.get()
+        response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict(...))
         if print_error:
             _print_error(response)
         return response

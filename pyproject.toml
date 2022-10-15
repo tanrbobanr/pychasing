@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pychasing"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
     { name = "Tanner B. Corcoran", email = "tannerbcorcoran@gmail.com" },
 ]
@@ -18,7 +18,7 @@ classifiers = [
 ]
 dependencies = [
     "requests >= 2.27.1",
-    "web-fetch >= 0.0.4",
+    "http-prep >= 0.0.3",
 ]
 
 [project.urls]
