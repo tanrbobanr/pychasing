@@ -224,7 +224,8 @@ class PatreonTier:
             DELETE_GROUP,
             PATCH_GROUP
         ) = constants.RATE_LIMITS["GRAND_CHAMPION"]
-        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS, constants.RATE_LIMITS["GRAND_CHAMPION"])}
+        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS,
+                   constants.RATE_LIMITS["GRAND_CHAMPION"])}
     
     
     class Champion(PatreonTierType):
@@ -240,7 +241,8 @@ class PatreonTier:
             DELETE_GROUP,
             PATCH_GROUP
         ) = constants.RATE_LIMITS["CHAMPION"]
-        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS, constants.RATE_LIMITS["CHAMPION"])}
+        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS,
+                   constants.RATE_LIMITS["CHAMPION"])}
     
 
     class Diamond(PatreonTierType):
@@ -256,7 +258,8 @@ class PatreonTier:
             DELETE_GROUP,
             PATCH_GROUP
         ) = constants.RATE_LIMITS["DIAMOND"]
-        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS, constants.RATE_LIMITS["DIAMOND"])}
+        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS,
+                   constants.RATE_LIMITS["DIAMOND"])}
     
 
     class Gold(PatreonTierType):
@@ -272,7 +275,8 @@ class PatreonTier:
             DELETE_GROUP,
             PATCH_GROUP
         ) = constants.RATE_LIMITS["GOLD"]
-        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS, constants.RATE_LIMITS["GOLD"])}
+        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS,
+                   constants.RATE_LIMITS["GOLD"])}
     
 
     class Regular(PatreonTierType):
@@ -288,7 +292,8 @@ class PatreonTier:
             DELETE_GROUP,
             PATCH_GROUP
         ) = constants.RATE_LIMITS["REGULAR"]
-        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS, constants.RATE_LIMITS["REGULAR"])}
+        __raw__ = {k:v for k, v in zip(constants.LIMITED_OPERATIONS,
+                   constants.RATE_LIMITS["REGULAR"])}
 
 
 class Visibility:
