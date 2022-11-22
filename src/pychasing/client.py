@@ -9,26 +9,15 @@ __license__ = "MIT License"
 __copyright__ = "Copyright (c) 2022-present Tanner B. Corcoran"
 
 
-from . import constants, types
+from . import rate_limit
+from . import enums
+from . import models
 import requests
 import typing
-import time
-import datetime
 import typing
 import httpprep
 import prepr
-
-
-def _rate_limit(previous_timestamp: float, wait_length: float) -> float:
-    """Wait a certain amount of time given a previous timestamp and interval.
-    
-    """
-    current_timestamp = datetime.datetime.now().timestamp()
-    timestamp_diff= current_timestamp - previous_timestamp
-    if timestamp_diff >= wait_length:
-        return current_timestamp
-    time.sleep(wait_length - timestamp_diff)
-    return datetime.datetime.now().timestamp()
+import enum
 
 
 def _print_error(response: requests.Response) -> None:
@@ -58,35 +47,51 @@ def _print_error(response: requests.Response) -> None:
               f"{error_description}for url: {response.url}\033[0m")
 
 
+def p(v):
+    """Return `v` if `v` is `...` or a `str`, else return `v.value`.
+    
+    """
+    return v if v == ... or isinstance(v, str) else v.value
+
+
 class Client:
-    """The main class used when interacting with the Ballchasing API.
+    """The main class used to interact with the Ballchasing API.
     
     """
     def __init__(self, token: str, auto_rate_limit: bool,
-                 patreon_tier: types.PatreonTierType) -> None:
+                 patreon_tier: enums.PatreonTier,
+                 rate_limit_safe_start: bool = False) -> None:
+        """
+        Arguments
+        ---------
+        token : str
+            A ballchasing API key (acquirable
+            from https://ballchasing.com/upload).
+        auto_rate_limit : bool
+            If `True`, the client will automatically limit API calls according
+            to the given Patreon tier.
+        patreon_tier : enums.PatreonTier
+            The token-holder's Ballchasing Patreon tier.
+        rate_limit_safe_start : bool, optional, default=False
+            If `True`, the rate limiter will start out as fully maxed out on API
+            calls.
+
+        """
         self._token = token
         self._auto_rate_limit = auto_rate_limit
-        self._patreon_tier = patreon_tier
-        self._call_timestamps = {
-            constants.OPERATION.LIST_REPLAYS    : 0,
-            constants.OPERATION.GET_REPLAY      : 0,
-            constants.OPERATION.DELETE_REPLAY   : 0,
-            constants.OPERATION.PATCH_REPLAY    : 0,
-            constants.OPERATION.DOWNLOAD_REPLAY : 0,
-            constants.OPERATION.CREATE_GROUP    : 0,
-            constants.OPERATION.LIST_GROUPS     : 0,
-            constants.OPERATION.GET_GROUP       : 0,
-            constants.OPERATION.DELETE_GROUP    : 0,
-            constants.OPERATION.PATCH_GROUP     : 0
-        }
-    
+        self._patreon_tier: dict[enums.Operation, tuple[int, ...]] = (
+            patreon_tier.value)
+        self._rate_limit_safe_start = rate_limit_safe_start
+        if auto_rate_limit:
+            self._rate_limiters = {k:rate_limit.RateLimit(*v,
+                                         safe_start=rate_limit_safe_start)
+                                   for k, v in self._patreon_tier.items()}
 
     def __repr__(self, *args, **kwargs) -> prepr.pstr:
         return prepr.prepr(self).args(self._token, self._auto_rate_limit,
-            self._patreon_tier).attr("_call_timestamps", self._call_timestamps
-            ).build(*args, **kwargs)
+            self._patreon_tier).kwarg("rate_limit_safe_start",
+            self._rate_limit_safe_start, False).build(*args, **kwargs)
     
-
     def ping(self, *, print_error: bool = True) -> requests.Response:
         """Ping the https://ballchasing.com servers.
 
@@ -122,9 +127,9 @@ class Client:
             _print_error(response)
         return response
 
-
-    def upload_replay(self, file: typing.BinaryIO, visibility: str, *,
-                      group: str  = ...,
+    def upload_replay(self, file: typing.BinaryIO,
+                      visibility: str | enums.Visibility,
+                      *, group: str  = ...,
                       print_error: bool = True) -> requests.Response:
         """Upload a replay to https://ballchasing.com.
 
@@ -132,10 +137,8 @@ class Client:
         ----------
         file : BinaryIO
             The `.replay` file to be uploaded.
-        visibility : str
-            The visibility of the replay once uploaded. Keywords for this
-            variable can be accessed through the `pychasing.types.Visibility`
-            class.
+        visibility : str or Visibility
+            The visibility of the replay once uploaded.
         group : str, optional
             The group to assign this replay to once it is uploaded.
         print_error : bool, optional, default=True
@@ -156,8 +159,8 @@ class Client:
             top_level_domain="com",
             path_segments=["api", "v2", "upload"]
         )
-        prepped_url.components.queries["visibility", "group"] = [visibility,
-                                                                 group]
+        prepped_url.components.queries["visibility", "group"] = [
+                p(visibility), group]
 
         # prepare headers
         prepped_headers = httpprep.Headers()
@@ -171,19 +174,24 @@ class Client:
             _print_error(response)
         return response
 
-
     def list_replays(self, *, next: str = ..., title: str = ...,
                      player_names: list[str] = ...,
                      player_ids: list[tuple[str, int | str]] = ...,
-                     playlist: str = ..., season: str = ...,
-                     match_result: str = ..., min_rank: str = ...,
-                     max_rank: str = ..., pro: bool = ...,
-                     uploader: typing.Literal["me"] | int  = ...,
-                     group: str = ..., map: str = ...,
-                     created_before: str = ..., created_after: str = ...,
-                     replay_date_before: str = ...,
-                     replay_date_after: str = ..., count: int = ...,
-                     sort_by: str = ..., sort_dir: str = ...,
+                     playlists: list[str | enums.Playlist] = ...,
+                     season: str | enums.Season = ...,
+                     match_result: str | enums.MatchResult = ...,
+                     min_rank: str | enums.Rank = ...,
+                     max_rank: str | enums.Rank = ...,
+                     pro: bool = ...,
+                     uploader: typing.Literal["me"] | str | int  = ...,
+                     group: str = ..., map: str | enums.Map = ...,
+                     created_before: models.Date | str = ...,
+                     created_after: models.Date | str = ...,
+                     replay_date_before: models.Date | str = ...,
+                     replay_date_after: models.Date | str = ...,
+                     count: int = ...,
+                     sort_by: str | enums.ReplaySortBy = ...,
+                     sort_dir: str | enums.SortDirection = ...,
                      print_error: bool = True) -> requests.Response:
         """List replays filtered by various criteria.
 
@@ -191,7 +199,7 @@ class Client:
         ----------
         next : str, optional
             A continuation URL (which can be acquired with
-            `<response_from_list_replays>.json()["next"]`). If defined, all
+            `<response from list_replays>.json()["next"]`). If defined, all
             other arguments will be ignored.
         title : str, optional
             Only include replays with the given title.
@@ -200,61 +208,50 @@ class Client:
             name.
         player_ids : list of tuple of str and (int or str), optional
             Only include replays that include the given player(s) by platform
-            [0] and player ID [1]. Keywords for platform can be accessed through
-            the pychasing.types.Platform class.
-        playlist : str, optional
-            Only include replays in a given playlist. Keywords for this variable
-            can be accessed through the pychasing.types.Playlist class.
-        season : str, optional
-            Only include replays played in a given season. The value for this be
-            "1", ..., "14" for the pre free-to-play seasons, and "f1", "f2", ...
-            for the post free-to-play seasons.
-        match_result : str, optional
+            [0] and player ID [1].
+        playlist : list of (str or Playlist), optional
+            Only include replays in the given playlist(s).
+        season : str or Season, optional
+            Only include replays played in a given season.
+        match_result : str or MatchResult, optional
             Only include replays that resulted in the given result (win/loss).
-            Keywords for this variable can be accessed through the
-            `pychasing.types.MatchResult` class.
-        min_rank : str, optional
+        min_rank : str or Rank, optional
             Only include replays where all players are above a given minimum
-            rank. Keywords for this variable can be accessed through the
-            `pychasing.types.Rank` class.
-        max_rank : str, optional
+            rank.
+        max_rank : str or Rank, optional
             Only include replays where all players are above a given maximum
-            rank. Keywords for this variable can be accessed through the
-            `pychasing.types.Rank` class.
+            rank.
         pro : bool, optional
             Only include replays where at least one player in the lobby is a pro
             player.
-        uploader : "me" or int, optional
+        uploader : "me" or int or str, optional
             Only include replays uploaded by the given user. If the value is set
             to "me", then only replays uploaded by the token holder will be
             returned, or if a SteamID64 is used, only replays uploaded by the
             given steam user will be returned.
         group : str, optional
             Only include replays that are direct children of the given group.
-        map : str, optional
-            Only include replays played on a specific map. Keywords for this
-            variable can be accessed through the pychasing.types.Map class.
-        created_before : str, optional
+        map : str or Map, optional
+            Only include replays played on a specific map.
+        created_before : Date or str, optional
             Only include replays created before a given date, formatted as an
-            ISO8601 datetime string.
-        created_after : str, optional
+            RFC3339 datetime string.
+        created_after : Date or str, optional
             Only include replays created after a given date, formatted as an
-            ISO8601 datetime string.
-        replay_date_before : str, optional
+            RFC3339 datetime string.
+        replay_date_before : Date or str, optional
             Only include replays played before a given date, formatted as an
-            ISO8601 datetime string.
-        replay_date_after : str, optional
+            RFC3339 datetime string.
+        replay_date_after : Date or str, optional
             Only include replays played after a given date, formatted as an
-            ISO8601 datetime string.
+            RFC3339 datetime string.
         count : int, optional, default=150
-            The number of replays returned. Must be between 1 and 200 if
-            defined.
-        sort_by : str, optional, default="upload-date"
-            Whether to sort by replay date or upload date. Keywords for this
-            variable can be accessed through the pychasing.types.SortBy class.
-        sort_dir : str, optional, default="desc"
-            Whether to sort descending or ascending. Keywords for this variable
-            can be accessed through the pychasing.types.SortDir class.
+            The number of replays returned. Must be between 1 and 200 
+            (inclusive) if defined.
+        sort_by : str or ReplaySortBy, optional, default=ReplaySortBy.upload_date
+            Whether to sort by replay date or upload date.
+        sort_dir : str or SortDirection, optional, default=SortDirection.desc
+            Whether to sort descending or ascending.
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error)
             if the request resulted in an HTTP error (i.e. status codes 400
@@ -290,56 +287,30 @@ class Client:
                 path_segments=["api", "replays"]
             )
             prepped_url.components.queries[
-                "title",
-                "playlist",
-                "season",
-                "match-result",
-                "min-rank",
-                "max-rank",
-                "pro",
-                "uploader",
-                "group",
-                "map",
-                "created-before",
-                "created-after",
-                "replay-date-before",
-                "replay-date-after",
-                "count",
-                "sort-by",
-                "sort-dir"
-            ] = [
-                title,
-                playlist,
-                season,
-                match_result,
-                min_rank,
-                max_rank,
-                "true" if pro is True else "false" if pro is False else ...,
-                uploader,
-                group,
-                map,
-                created_before,
-                created_after,
-                replay_date_before,
-                replay_date_after,
-                count,
-                sort_by,
-                sort_dir
-            ]
+                "title", "season", "match-result", "min-rank", "max-rank",
+                "pro", "uploader", "group", "map", "created-before",
+                "created-after", "replay-date-before", "replay-date-after",
+                "count", "sort-by", "sort-dir"] = [
+                title, p(season), p(match_result), p(min_rank), p(max_rank),
+                str(pro).lower() if isinstance(pro, bool) else ...,
+                uploader, group, p(map), created_before, created_after,
+                replay_date_before, replay_date_after, count, p(sort_by),
+                p(sort_dir)]
             if player_names != ...:
                 for name in player_names:
                     prepped_url.components.queries["player-name"] = name
             if player_ids != ...:
                 for platform, id in player_ids:
                     prepped_url.components.queries["player-id"] = (f"{platform}"
-                    f":{id}")
+                                                                   f":{id}")
+            if playlists != ...:
+                for playlist in playlists:
+                    prepped_url.components.queries["playlist"] = p(playlist)
             url = prepped_url.build(query_check=...)
+
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.LIST_REPLAYS] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.LIST_REPLAYS],
-                self._patreon_tier.LIST_REPLAYS)
+            self._rate_limiters[enums.Operation.list_replays]()
 
         # make request, print error, and return response
         response = requests.get(url, headers=prepped_headers.format_dict())
@@ -347,7 +318,6 @@ class Client:
             _print_error(response)
         return response
     
-
     def get_replay(self, replay_id: str, *,
                    print_error: bool = True) -> requests.Response:
         """Get more in-depth information for a specific replay.
@@ -381,9 +351,7 @@ class Client:
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[constants.OPERATION.GET_REPLAY] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.GET_REPLAY],
-                self._patreon_tier.GET_REPLAY)
+            self._rate_limiters[enums.Operation.get_replay]()
 
         # make request, print error, and return response
         response = requests.get(prepped_url.build(), headers=
@@ -392,7 +360,6 @@ class Client:
             _print_error(response)
         return response
         
-
     def delete_replay(self, replay_id: str, *,
                       print_error: bool = True) -> requests.Response:
         """Delete the given replay from https://ballchasing.com, so long as the
@@ -427,10 +394,7 @@ class Client:
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.DELETE_REPLAY] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.DELETE_REPLAY],
-                self._patreon_tier.DELETE_REPLAY)
+            self._rate_limiters[enums.Operation.delete_replay]()
 
         # make request, print error, and return response
         response = requests.delete(prepped_url.build(), headers=
@@ -439,9 +403,8 @@ class Client:
             _print_error(response)
         return response
         
-
     def patch_replay(self, replay_id: str, *, title: str = ...,
-                     visibility: str = ..., group: str = ...,
+                     visibility: str | enums.Visibility = ..., group: str = ...,
                      print_error: bool = True) -> requests.Response:
         """Patch the title, visibility, and/or group of a replay on
         https://ballchasing.com, so long as the replay is owned by the token
@@ -453,9 +416,8 @@ class Client:
             The ID of the replay that is present in ballchasing's system.
         title : str, optional
             Set the title of the replay.
-        visibility : str, optional
-            Set the visibility of the replay. Keywords for this variable can be
-            accessed through the `pychasing.types.Visibility` class.
+        visibility : str or Visibility, optional
+            Set the visibility of the replay.
         group : str, optional
             Set the group of the replay. An empty string (`""`) will set the
             group to none.
@@ -484,23 +446,19 @@ class Client:
 
         # prepare payload
         payload = httpprep.OverloadDict()
-        payload["title", "visibility", "group"] = [title, visibility, group]
+        payload["title", "visibility", "group"] = [title, p(visibility), group]
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.PATCH_REPLAY] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.PATCH_REPLAY],
-                self._patreon_tier.PATCH_REPLAY)
+            self._rate_limiters[enums.Operation.patch_replay]()
 
         # make request, print error, and return response
-        response = requests.patch(prepped_url.build(), headers=
-                                  prepped_headers.format_dict(),
+        response = requests.patch(prepped_url.build(),
+                                  headers=prepped_headers.format_dict(),
                                   json=payload.remove_values(...).to_dict())
         if print_error:
             _print_error(response)
         return response
-
 
     def download_replay(self, replay_id: str, *,
                         print_error: bool = True) -> requests.Response:
@@ -510,9 +468,6 @@ class Client:
         ----------
         replay_id : str
             The ID of the replay that is present in ballchasing's system.
-        save_path : str, optional
-            If defined, the replay content will be saved into the specified file
-            (must be a `.replay` file).
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error)
             if the request resulted in an HTTP error (i.e. status codes 400
@@ -544,21 +499,20 @@ class Client:
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.DOWNLOAD_REPLAY] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.DOWNLOAD_REPLAY],
-                self._patreon_tier.DOWNLOAD_REPLAY)
+            self._rate_limiters[enums.Operation.download_replay]()
 
         # make request, print error, and return response
-        response = requests.get(prepped_url.build(), headers=
-                                prepped_headers.format_dict(), stream=True)
+        response = requests.get(prepped_url.build(),
+                                headers=prepped_headers.format_dict(),
+                                stream=True)
         if print_error:
             _print_error(response)
         return response
 
-
-    def create_group(self, name: str, player_identification: str,
-                     team_identification: str, *, parent: str = ...,
+    def create_group(self, name: str,
+                     player_identification: str | enums.PlayerIdentification,
+                     team_identification: str | enums.TeamIdentification, *,
+                     parent: str = ...,
                      print_error: bool = True) -> requests.Response:
         """Create a replay group on https://ballchasing.com.
 
@@ -566,16 +520,13 @@ class Client:
         ----------
         name : str
             The name of the group.
-        player_identification : str
+        player_identification : str or PlayerIdentification
             Determines how to identify the same player across multiple replays -
-            by account name, or account ID. Keywords for this variable can be
-            accessed through the `pychasing.types.PlayerIdentification` class.
-        team_identification : str
+            by account name, or account ID.
+        team_identification : str or TeamIdentification
             Determines how to identify the same team across multiple replays -
             by distinct players (if teams have fixed rosters for every single
             games), or by player clusters (if subs are allowed between games).
-            Keywords for this variable can be accessed through the
-            `pychasing.types.TeamIdentification` class.
         parent : str, optional
             The parent group (group ID) to set as the parent of this group.
         print_error : bool, optional, default=True
@@ -604,15 +555,12 @@ class Client:
         # prepare payload
         payload = httpprep.OverloadDict()
         payload["name", "player_identification", "team_identification",
-                "parent"] = [name, player_identification, team_identification,
-                             parent]
+                "parent"] = [name, p(player_identification),
+                             p(team_identification), parent]
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.CREATE_GROUP] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.CREATE_GROUP],
-                self._patreon_tier.CREATE_GROUP)
+            self._rate_limiters[enums.Operation.create_group]()
 
         # make request, print error, and return response
         response = requests.post(prepped_url.build(), headers=
@@ -622,11 +570,12 @@ class Client:
             _print_error(response)
         return response
         
-
     def list_groups(self, *, next: str = ..., name: str = ...,
                     creator: str | int = ..., group: str = ...,
-                    created_before: str = ..., created_after: str = ...,
-                    count: int = ..., sort_by: str = ..., sort_dir: str = ...,
+                    created_before: models.Date | str = ...,
+                    created_after: models.Date | str = ..., count: int = ...,
+                    sort_by: str | enums.GroupSortBy = ...,
+                    sort_dir: str | enums.SortDirection = ...,
                     print_error: bool = True) -> requests.Response:
         """List replay groups from https://ballchasing.com filtered by various
         criteria.
@@ -635,7 +584,7 @@ class Client:
         ----------
         next : str, optional
             A continuation URL (which can be acquired with
-            `<response_from_list_replays>.json()["next"]`). If defined, all
+            `<response from list_groups>.json()["next"]`). If defined, all
             other arguments will be ignored.
         name : str, optional
             Only include groups whose title contains the given text.
@@ -645,24 +594,19 @@ class Client:
         group : str, optional
             Only include replays that are direct or indirect children of the
             given group (defined by a group ID).
-        created_before : str, optional
+        created_before : Date or str, optional
             Only include groups created before a given date, formatted as an
-            ISO8601 datetime string.
-        created_after : str, optional
+            RFC3339 datetime string.
+        created_after : Date or str, optional
             Only include groups created after a given date, formatted as an
-            ISO8601 datetime string.
-        replay_date_before : str, optional
-            Only include replays played before a given date, formatted as an
-            ISO8601 datetime string.
-        replay_date_after : str, optional
-            Only include replays played after a given date, formatted as an
-            ISO8601 datetime string.
+            RFC3339 datetime string.
         count : int, optional, default=150
-            The number of groups returned. Must be between 1 and 200 if defined.
-        sort_by : str, optional, default="created"
+            The number of groups returned. Must be between 1 and 200 (inclusive)
+            if defined.
+        sort_by : str | GroupSortBy, optional, default=GroupSortBy.created
             Whether to sort by creation date or name. Keywords for this variable
             can be accessed through the `pychasing.types.SortBy` class.
-        sort_dir : str, optional, default="desc"
+        sort_dir : str | SortDirection, optional, default=SortDirection.desc
             Whether to sort descending or ascending. Keywords for this variable
             can be accessed through the `pychasing.types.SortDir` class.
         print_error : bool, optional, default=True
@@ -699,40 +643,23 @@ class Client:
                 top_level_domain="com",
                 path_segments=["api", "groups"]
             )
-            prepped_url.components.queries[
-                "name",
-                "creator",
-                "group",
-                "created-before",
-                "created-after",
-                "count",
-                "sort-by",
-                "sort-dir"
-            ] = [
-                name,
-                creator,
-                group,
-                created_before,
-                created_after,
-                count,
-                sort_by,
-                sort_dir
-            ]
+            prepped_url.components.queries["name", "creator", "group",
+                                           "created-before", "created-after",
+                                           "count", "sort-by", "sort-dir"] = [
+                                           name, creator, group, created_before,
+                                           created_after, count, p(sort_by),
+                                           p(sort_dir)]
             url = prepped_url.build(query_check=...)
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.LIST_GROUPS] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.LIST_GROUPS],
-                self._patreon_tier.LIST_GROUPS)
+            self._rate_limiters[enums.Operation.list_groups]()
 
         # make request, print error, and return response
         response = requests.get(url, headers=prepped_headers.format_dict())
         if print_error:
             _print_error(response)
         return response
-
 
     def get_group(self, group_id: str, *,
                   print_error: bool = True) -> requests.Response:
@@ -768,9 +695,7 @@ class Client:
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[constants.OPERATION.GET_GROUP] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.GET_GROUP],
-                self._patreon_tier.GET_GROUP)
+            self._rate_limiters[enums.Operation.get_group]()
 
         # make request, print error, and return response
         response = requests.get(prepped_url.build(), headers=
@@ -779,7 +704,6 @@ class Client:
             _print_error(response)
         return response
     
-
     def delete_group(self, group_id: str, *,
                      print_error: bool = True) -> requests.Response:
         """Delete a specific group (and all children groups) from
@@ -814,10 +738,7 @@ class Client:
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.DELETE_GROUP] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.DELETE_GROUP],
-                self._patreon_tier.DELETE_GROUP)
+            self._rate_limiters[enums.Operation.delete_group]()
 
         # make request, print error, and return response
         response = requests.delete(prepped_url.build(), headers=
@@ -826,9 +747,10 @@ class Client:
             _print_error(response)
         return response
     
-
-    def patch_group(self, group_id: str, *, player_identification: str = ...,
-                    team_identification: str = ..., parent: str = ...,
+    def patch_group(self, group_id: str, *,
+                    player_identification: str | enums.PlayerIdentification = ...,
+                    team_identification: str | enums.TeamIdentification = ...,
+                    parent: str = ...,
                     shared: bool = ...,
                     print_error: bool = True) -> requests.Response:
         """Delete a specific group (and all children groups) from
@@ -838,16 +760,13 @@ class Client:
         ----------
         group_id : str
             The ID of the group present in ballchasing's systems.
-        player_identification : str, optional
+        player_identification : str or PlayerIdentification, optional
             Determines how to identify the same player across multiple replays -
-            by account name, or account ID. Keywords for this variable can be
-            accessed through the `pychasing.types.PlayerIdentification` class.
-        team_identification : str, optional
+            by account name, or account ID.
+        team_identification : str or TeamIdentification, optional
             Determines how to identify the same team across multiple replays -
             by distinct players (if teams have fixed rosters for every single
             games), or by player clusters (if subs are allowed between games).
-            Keywords for this variable can be accessed through the
-            `pychasing.types.TeamIdentification` class.
         parent : str, optional
             The parent group (group ID) to set as the parent of this group.
         shared : bool, optional
@@ -880,15 +799,12 @@ class Client:
         # prepare payload
         payload = httpprep.OverloadDict()
         payload["player_identification", "team_identification", "parent",
-                "shared"] = [player_identification, team_identification, parent,
-                             shared]
+                "shared"] = [p(player_identification),
+                             p(team_identification), parent, shared]
 
         # rate limit if enabled
         if self._auto_rate_limit:
-            self._call_timestamps[
-                constants.OPERATION.PATCH_GROUP] = _rate_limit(
-                self._call_timestamps[constants.OPERATION.PATCH_GROUP],
-                self._patreon_tier.PATCH_GROUP)
+            self._rate_limiters[enums.Operation.patch_group]()
 
         # make request, print error, and return response
         response = requests.patch(prepped_url.build(), headers=
@@ -898,7 +814,6 @@ class Client:
             _print_error(response)
         return response
     
-
     def maps(self, *, print_error: bool = True) -> requests.Response:
         """Get a list of current maps.
         
@@ -933,7 +848,6 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
     
     @staticmethod
     def get_threejs(replay_id: str, *, cookie: str = ...,
@@ -990,7 +904,6 @@ class Client:
             _print_error(response)
         return response
     
-
     @staticmethod
     def get_timeline(replay_id: str, *, cookie: str = ...,
                     print_error: bool = True) -> requests.Response:
@@ -1044,9 +957,9 @@ class Client:
             _print_error(response)
         return response
     
-
     @staticmethod
-    def export_csv(group_id: str, stat: str, *, cookie: str = ...,
+    def export_csv(group_id: str, stat: str | enums.GroupStats, *,
+                   cookie: str = ...,
                    print_error: bool = True) -> requests.Response:
         """Get group statistics from a group on https://ballchasing.com.
 
@@ -1057,10 +970,9 @@ class Client:
         ----------
         group_id : str
             The ID of the group that is present in ballchasing's system.
-        stat : str
+        stat : str or GroupStats
             The stat section (players, teams, players games, teams games) to
-            export. Keywords for this variable can be accessed through the
-            `pychasing.types.GroupStats` class.
+            export.
         cookie : str, optional
             Not required, but if provided, you are able to use this method on
             private replays so long as they belong to the cookie-holder's
@@ -1081,8 +993,8 @@ class Client:
             protocol="https",
             domain="ballchasing",
             top_level_domain="com",
-            path_segments=["dl", "stats", f"group-{stat}", group_id,
-                           f"{group_id}-{stat}.csv"]
+            path_segments=["dl", "stats", f"group-{p(stat)}", group_id,
+                           f"{group_id}-{p(stat)}.csv"]
         )
 
         # prepare headers

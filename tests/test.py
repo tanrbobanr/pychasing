@@ -14,7 +14,8 @@ UPLOADED_REPLAY_ID = ""
 pychasing_client = pychasing.Client(
     TOKEN,
     True,
-    pychasing.types.PatreonTier.Regular
+    pychasing.PatreonTier.none,
+    True
 )
 
 
@@ -27,7 +28,7 @@ def test_ping() -> None:
 
 
 def test_list_replays() -> None:
-    res0 = pychasing_client.list_replays(count=5, pro=True, playlist=pychasing.types.Playlist.RANKED_DOUBLES)
+    res0 = pychasing_client.list_replays(count=5, pro=True, playlists=[pychasing.Playlist.ranked_doubles])
     print(res0.json())
     assert len(res0.json()["list"]) == 5
     res1 = pychasing_client.list_replays(next = res0.json()["next"])
@@ -56,7 +57,7 @@ def test_maps() -> None:
 
 
 def test_create_group() -> None:
-    res0 = pychasing_client.create_group(GROUP_NAME, pychasing.types.PlayerIdentification.BY_ID, pychasing.types.TeamIdentification.BY_PLAYER_CLUSTERS)
+    res0 = pychasing_client.create_group(GROUP_NAME, pychasing.PlayerIdentification.by_id, pychasing.TeamIdentification.by_player_clusters)
     print(res0.json())
     assert "https://ballchasing.com/api/groups/" in res0.json()["link"]
     print("\033[96mpychasing.client.Client.create_group \033[90m: \033[92mGOOD\033[0m")
@@ -65,7 +66,7 @@ def test_create_group() -> None:
 def test_upload_replay() -> None:
     groups = pychasing_client.list_groups(name=GROUP_NAME, creator=STEAM_ID)
     with open(REPLAY_PATH, "rb") as replay_file:
-        res0 = pychasing_client.upload_replay(replay_file, pychasing.types.Visibility.PRIVATE, group = groups.json()["list"][0]["id"])
+        res0 = pychasing_client.upload_replay(replay_file, pychasing.Visibility.private, group = groups.json()["list"][0]["id"])
         print(res0.json())
         print(f"\033[96mpychasing.client.Client.upload_replay \033[90m: \033[92mGOOD\033[0m\n\nNEW REPLAY ID: {res0.json()['id']}")
 
@@ -87,17 +88,17 @@ def test_get_group() -> None:
 
 def test_patch_group() -> None:
     groups = pychasing_client.list_groups(name=GROUP_NAME, creator=STEAM_ID)
-    res0 = pychasing_client.patch_group(groups.json()["list"][0]["id"], team_identification=pychasing.types.TeamIdentification.BY_DISTINCT_PLAYERS)
+    res0 = pychasing_client.patch_group(groups.json()["list"][0]["id"], team_identification=pychasing.TeamIdentification.by_distinct_players)
     print(res0.content)
     assert res0.content == b""
     res1 = pychasing_client.get_group(groups.json()["list"][0]["id"])
     print(res1.json())
-    assert res1.json()["team_identification"] == pychasing.types.TeamIdentification.BY_DISTINCT_PLAYERS
+    assert res1.json()["team_identification"] == pychasing.TeamIdentification.by_distinct_players.value
     print("\033[96mpychasing.client.Client.patch_group \033[90m: \033[92mGOOD\033[0m")
 
 
 def test_patch_replay() -> None:
-    res0 = pychasing_client.patch_replay(UPLOADED_REPLAY_ID, title=REPLAY_NAME, visibility=pychasing.types.Visibility.PUBLIC)
+    res0 = pychasing_client.patch_replay(UPLOADED_REPLAY_ID, title=REPLAY_NAME, visibility=pychasing.Visibility.public)
     print(res0.content)
     assert res0.content == b""
     res1 = pychasing_client.get_replay(UPLOADED_REPLAY_ID)
@@ -127,7 +128,7 @@ def test_experimentals() -> None:
     print(res1.content[:100])
     input("\033[92mPress any key to continue...\033[0m")
     groups = pychasing_client.list_groups(name=GROUP_NAME, creator=STEAM_ID)
-    res2 = pychasing_client.export_csv(groups.json()["list"][0]["id"], pychasing.types.GroupStats.PLAYERS)
+    res2 = pychasing_client.export_csv(groups.json()["list"][0]["id"], pychasing.GroupStats.players)
     print(res2.content[:100])
 
 
@@ -147,7 +148,7 @@ def test_delete_group() -> None:
 
 
 if __name__ == "__main__":
-    step = 1
+    step = 0
     match step:
         case 0: test_ping()
         case 1: test_list_replays()
