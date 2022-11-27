@@ -18,6 +18,7 @@ def rlim_burstonly(self: "RateLimit") -> None:
     current_dt = datetime.datetime.now().timestamp()
     if (diff := current_dt - self.last) < self.burst_seconds:
         self.last = current_dt + (addl := self.burst_seconds - diff)
+        self.last = current_dt + addl
         time.sleep(addl)
         return
     self.last = current_dt
