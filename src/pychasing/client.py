@@ -14,10 +14,13 @@ from . import enums
 from . import models
 import requests
 import typing
-import typing
 import httpprep
 import prepr
-import enum
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 
 def _print_error(response: requests.Response) -> None:
@@ -79,7 +82,7 @@ class Client:
         """
         self._token = token
         self._auto_rate_limit = auto_rate_limit
-        self._patreon_tier: dict[enums.Operation, tuple[int, ...]] = (
+        self._patreon_tier: typing.Dict[enums.Operation, typing.Tuple[int, ...]] = (
             patreon_tier.value)
         self._rate_limit_safe_start = rate_limit_safe_start
         if auto_rate_limit:
@@ -128,7 +131,7 @@ class Client:
         return response
 
     def upload_replay(self, file: typing.BinaryIO,
-                      visibility: str | enums.Visibility,
+                      visibility: typing.Union[str, enums.Visibility],
                       *, group: str  = ...,
                       print_error: bool = True) -> requests.Response:
         """Upload a replay to https://ballchasing.com.
@@ -167,31 +170,33 @@ class Client:
         prepped_headers.Authorization = self._token
         
         # make request, print error, and return response
-        response = requests.post(prepped_url.build(query_check=...), headers=
-                                 prepped_headers.format_dict(),
+        response = requests.post(prepped_url.build(query_check=...),
+                                 headers=prepped_headers.format_dict(),
                                  files={"file":file})
         if print_error:
             _print_error(response)
         return response
 
     def list_replays(self, *, next: str = ..., title: str = ...,
-                     player_names: list[str] = ...,
-                     player_ids: list[tuple[str, int | str]] = ...,
-                     playlists: list[str | enums.Playlist] = ...,
-                     season: str | enums.Season = ...,
-                     match_result: str | enums.MatchResult = ...,
-                     min_rank: str | enums.Rank = ...,
-                     max_rank: str | enums.Rank = ...,
+                     player_names: typing.List[str] = ...,
+                     player_ids: typing.List[typing.Tuple[str, typing.Union[
+                        int, str]]] = ...,
+                     playlists: typing.List[typing.Union[str, 
+                        enums.Playlist]] = ...,
+                     season: typing.Union[str, enums.Season] = ...,
+                     match_result: typing.Union[str, enums.MatchResult] = ...,
+                     min_rank: typing.Union[str, enums.Rank] = ...,
+                     max_rank: typing.Union[str, enums.Rank] = ...,
                      pro: bool = ...,
-                     uploader: typing.Literal["me"] | str | int  = ...,
-                     group: str = ..., map: str | enums.Map = ...,
-                     created_before: models.Date | str = ...,
-                     created_after: models.Date | str = ...,
-                     replay_date_before: models.Date | str = ...,
-                     replay_date_after: models.Date | str = ...,
+                     uploader: typing.Union[Literal["me"], str, int]  = ...,
+                     group: str = ..., map: typing.Union[str, enums.Map] = ...,
+                     created_before: typing.Union[models.Date, str] = ...,
+                     created_after: typing.Union[models.Date, str] = ...,
+                     replay_date_before: typing.Union[models.Date, str] = ...,
+                     replay_date_after: typing.Union[models.Date, str] = ...,
                      count: int = ...,
-                     sort_by: str | enums.ReplaySortBy = ...,
-                     sort_dir: str | enums.SortDirection = ...,
+                     sort_by: typing.Union[str, enums.ReplaySortBy] = ...,
+                     sort_dir: typing.Union[str, enums.SortDirection] = ...,
                      print_error: bool = True) -> requests.Response:
         """List replays filtered by various criteria.
 
@@ -248,7 +253,8 @@ class Client:
         count : int, optional, default=150
             The number of replays returned. Must be between 1 and 200 
             (inclusive) if defined.
-        sort_by : str or ReplaySortBy, optional, default=ReplaySortBy.upload_date
+        sort_by : str or ReplaySortBy, optional, default=
+        ReplaySortBy.upload_date
             Whether to sort by replay date or upload date.
         sort_dir : str or SortDirection, optional, default=SortDirection.desc
             Whether to sort descending or ascending.
@@ -404,7 +410,8 @@ class Client:
         return response
         
     def patch_replay(self, replay_id: str, *, title: str = ...,
-                     visibility: str | enums.Visibility = ..., group: str = ...,
+                     visibility: typing.Union[str, enums.Visibility] = ...,
+                     group: str = ...,
                      print_error: bool = True) -> requests.Response:
         """Patch the title, visibility, and/or group of a replay on
         https://ballchasing.com, so long as the replay is owned by the token
@@ -510,8 +517,10 @@ class Client:
         return response
 
     def create_group(self, name: str,
-                     player_identification: str | enums.PlayerIdentification,
-                     team_identification: str | enums.TeamIdentification, *,
+                     player_identification: typing.Union[str,
+                        enums.PlayerIdentification],
+                     team_identification: typing.Union[str,
+                        enums.TeamIdentification], *,
                      parent: str = ...,
                      print_error: bool = True) -> requests.Response:
         """Create a replay group on https://ballchasing.com.
@@ -571,11 +580,12 @@ class Client:
         return response
         
     def list_groups(self, *, next: str = ..., name: str = ...,
-                    creator: str | int = ..., group: str = ...,
-                    created_before: models.Date | str = ...,
-                    created_after: models.Date | str = ..., count: int = ...,
-                    sort_by: str | enums.GroupSortBy = ...,
-                    sort_dir: str | enums.SortDirection = ...,
+                    creator: typing.Union[str, int] = ..., group: str = ...,
+                    created_before: typing.Union[models.Date, str] = ...,
+                    created_after: typing.Union[models.Date, str] = ...,
+                    count: int = ...,
+                    sort_by: typing.Union[str, enums.GroupSortBy] = ...,
+                    sort_dir: typing.Union[str, enums.SortDirection] = ...,
                     print_error: bool = True) -> requests.Response:
         """List replay groups from https://ballchasing.com filtered by various
         criteria.
@@ -748,11 +758,11 @@ class Client:
         return response
     
     def patch_group(self, group_id: str, *,
-                    player_identification: str | enums.PlayerIdentification = ...,
-                    team_identification: str | enums.TeamIdentification = ...,
-                    parent: str = ...,
-                    shared: bool = ...,
-                    print_error: bool = True) -> requests.Response:
+        player_identification: typing.Union[str,
+            enums.PlayerIdentification] = ...,
+        team_identification: typing.Union[str, enums.TeamIdentification] = ...,
+        parent: str = ..., shared: bool = ...,
+        print_error: bool = True) -> requests.Response:
         """Delete a specific group (and all children groups) from
         https://ballchasing.com, so long as it is owned by the token holder.
 
@@ -958,7 +968,7 @@ class Client:
         return response
     
     @staticmethod
-    def export_csv(group_id: str, stat: str | enums.GroupStats, *,
+    def export_csv(group_id: str, stat: typing.Union[str, enums.GroupStats], *,
                    cookie: str = ...,
                    print_error: bool = True) -> requests.Response:
         """Get group statistics from a group on https://ballchasing.com.
