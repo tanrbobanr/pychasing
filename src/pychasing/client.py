@@ -9,13 +9,13 @@ __license__ = "MIT License"
 __copyright__ = "Copyright (c) 2022-present Tanner B. Corcoran"
 
 
-from . import rate_limit
-from . import enums
 from . import models
+from . import enums
 import requests
-import typing
 import httpprep
+import typing
 import prepr
+import rlim
 
 try:
     from typing import Literal
@@ -80,20 +80,16 @@ class Client:
             calls.
 
         """
+        
         self._token = token
-        self._auto_rate_limit = auto_rate_limit
-        self._patreon_tier: typing.Dict[enums.Operation, typing.Tuple[int, ...]] = (
-            patreon_tier.value)
-        self._rate_limit_safe_start = rate_limit_safe_start
         if auto_rate_limit:
-            self._rate_limiters = {k:rate_limit.RateLimit(*v,
-                                         safe_start=rate_limit_safe_start)
-                                   for k, v in self._patreon_tier.items()}
+            for k, v in patreon_tier.value.items():
+                rlim.set_rate_limiter(getattr(self, k.name),
+                                      rlim.RateLimiter(*v,
+                                          safestart=rate_limit_safe_start))
 
     def __repr__(self, *args, **kwargs) -> prepr.pstr:
-        return prepr.prepr(self).args(self._token, self._auto_rate_limit,
-            self._patreon_tier).kwarg("rate_limit_safe_start",
-            self._rate_limit_safe_start, False).build(*args, **kwargs)
+        return prepr.prepr(self).args(self._token).build(*args, **kwargs)
     
     def ping(self, *, print_error: bool = True) -> requests.Response:
         """Ping the https://ballchasing.com servers.
@@ -177,6 +173,7 @@ class Client:
             _print_error(response)
         return response
 
+    @rlim.placeholder
     def list_replays(self, *, next: str = ..., title: str = ...,
                      player_names: typing.List[str] = ...,
                      player_ids: typing.List[typing.Tuple[str, typing.Union[
@@ -315,8 +312,8 @@ class Client:
             url = prepped_url.build(query_check=...)
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.list_replays]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.list_replays]()
 
         # make request, print error, and return response
         response = requests.get(url, headers=prepped_headers.format_dict())
@@ -324,6 +321,7 @@ class Client:
             _print_error(response)
         return response
     
+    @rlim.placeholder
     def get_replay(self, replay_id: str, *,
                    print_error: bool = True) -> requests.Response:
         """Get more in-depth information for a specific replay.
@@ -356,8 +354,8 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.get_replay]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.get_replay]()
 
         # make request, print error, and return response
         response = requests.get(prepped_url.build(), headers=
@@ -365,7 +363,8 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-        
+    
+    @rlim.placeholder
     def delete_replay(self, replay_id: str, *,
                       print_error: bool = True) -> requests.Response:
         """Delete the given replay from https://ballchasing.com, so long as the
@@ -399,8 +398,8 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.delete_replay]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.delete_replay]()
 
         # make request, print error, and return response
         response = requests.delete(prepped_url.build(), headers=
@@ -408,7 +407,8 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-        
+    
+    @rlim.placeholder
     def patch_replay(self, replay_id: str, *, title: str = ...,
                      visibility: typing.Union[str, enums.Visibility] = ...,
                      group: str = ...,
@@ -456,8 +456,8 @@ class Client:
         payload["title", "visibility", "group"] = [title, p(visibility), group]
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.patch_replay]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.patch_replay]()
 
         # make request, print error, and return response
         response = requests.patch(prepped_url.build(),
@@ -467,6 +467,7 @@ class Client:
             _print_error(response)
         return response
 
+    @rlim.placeholder
     def download_replay(self, replay_id: str, *,
                         print_error: bool = True) -> requests.Response:
         """Download a replay from https://ballchasing.com.
@@ -505,8 +506,8 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.download_replay]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.download_replay]()
 
         # make request, print error, and return response
         response = requests.get(prepped_url.build(),
@@ -516,6 +517,7 @@ class Client:
             _print_error(response)
         return response
 
+    @rlim.placeholder
     def create_group(self, name: str,
                      player_identification: typing.Union[str,
                         enums.PlayerIdentification],
@@ -568,8 +570,8 @@ class Client:
                              p(team_identification), parent]
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.create_group]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.create_group]()
 
         # make request, print error, and return response
         response = requests.post(prepped_url.build(), headers=
@@ -578,7 +580,8 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-        
+    
+    @rlim.placeholder
     def list_groups(self, *, next: str = ..., name: str = ...,
                     creator: typing.Union[str, int] = ..., group: str = ...,
                     created_before: typing.Union[models.Date, str] = ...,
@@ -662,8 +665,8 @@ class Client:
             url = prepped_url.build(query_check=...)
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.list_groups]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.list_groups]()
 
         # make request, print error, and return response
         response = requests.get(url, headers=prepped_headers.format_dict())
@@ -671,6 +674,7 @@ class Client:
             _print_error(response)
         return response
 
+    @rlim.placeholder
     def get_group(self, group_id: str, *,
                   print_error: bool = True) -> requests.Response:
         """Get information on a specific replay group from
@@ -704,8 +708,8 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.get_group]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.get_group]()
 
         # make request, print error, and return response
         response = requests.get(prepped_url.build(), headers=
@@ -747,8 +751,8 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.delete_group]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.delete_group]()
 
         # make request, print error, and return response
         response = requests.delete(prepped_url.build(), headers=
@@ -757,6 +761,7 @@ class Client:
             _print_error(response)
         return response
     
+    @rlim.placeholder
     def patch_group(self, group_id: str, *,
         player_identification: typing.Union[str,
             enums.PlayerIdentification] = ...,
@@ -813,8 +818,8 @@ class Client:
                              p(team_identification), parent, shared]
 
         # rate limit if enabled
-        if self._auto_rate_limit:
-            self._rate_limiters[enums.Operation.patch_group]()
+        # if self._auto_rate_limit:
+        #     self._rate_limiters[enums.Operation.patch_group]()
 
         # make request, print error, and return response
         response = requests.patch(prepped_url.build(), headers=

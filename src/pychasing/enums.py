@@ -9,6 +9,7 @@ __license__ = "MIT License"
 __copyright__ = "Copyright (c) 2022-present Tanner B. Corcoran"
 
 import enum
+import rlim
 
 
 class Operation(enum.Enum):
@@ -31,64 +32,64 @@ class Operation(enum.Enum):
 
 class PatreonTier(enum.Enum):
     grand_champion={
-        Operation.list_replays: (16,),
-        Operation.get_replay: (16,),
-        Operation.delete_replay: (16,),
-        Operation.patch_replay: (16,),
-        Operation.download_replay: (2,),
-        Operation.create_group: (16,),
-        Operation.list_groups: (16,),
-        Operation.get_group: (16,),
-        Operation.delete_group: (16,),
-        Operation.patch_group: (16,)
+        Operation.list_replays: (rlim.Rate(16),),
+        Operation.get_replay: (rlim.Rate(16),),
+        Operation.delete_replay: (rlim.Rate(16),),
+        Operation.patch_replay: (rlim.Rate(16),),
+        Operation.download_replay: (rlim.Rate(2),),
+        Operation.create_group: (rlim.Rate(16),),
+        Operation.list_groups: (rlim.Rate(16),),
+        Operation.get_group: (rlim.Rate(16),),
+        Operation.delete_group: (rlim.Rate(16),),
+        Operation.patch_group: (rlim.Rate(16),)
     }
     champion={
-        Operation.list_replays: (8,),
-        Operation.get_replay: (8,),
-        Operation.delete_replay: (8,),
-        Operation.patch_replay: (8,),
-        Operation.download_replay: (2, 2000, 3600),
-        Operation.create_group: (8,),
-        Operation.list_groups: (8,),
-        Operation.get_group: (8,),
-        Operation.delete_group: (8,),
-        Operation.patch_group: (8,)
+        Operation.list_replays: (rlim.Rate(8),),
+        Operation.get_replay: (rlim.Rate(8),),
+        Operation.delete_replay: (rlim.Rate(8),),
+        Operation.patch_replay: (rlim.Rate(8),),
+        Operation.download_replay: (rlim.Rate(2), rlim.Limit(2000, 3600)),
+        Operation.create_group: (rlim.Rate(8),),
+        Operation.list_groups: (rlim.Rate(8),),
+        Operation.get_group: (rlim.Rate(8),),
+        Operation.delete_group: (rlim.Rate(8),),
+        Operation.patch_group: (rlim.Rate(8),)
     }
     diamond={
-        Operation.list_replays: (4, 2000, 3600),
-        Operation.get_replay: (4, 5000, 3600),
-        Operation.delete_replay: (4, 5000, 3600),
-        Operation.patch_replay: (4, 5000, 3600),
-        Operation.download_replay: (2, 1000, 3600),
-        Operation.create_group: (4, 5000, 3600),
-        Operation.list_groups: (4, 2000, 3600),
-        Operation.get_group: (4, 5000, 3600),
-        Operation.delete_group: (4, 5000, 3600),
-        Operation.patch_group: (4, 5000, 3600)
+        Operation.list_replays: (rlim.Rate(4), rlim.Limit(2000, 3600)),
+        Operation.get_replay: (rlim.Rate(4), rlim.Limit(5000, 3600)),
+        Operation.delete_replay: (rlim.Rate(4), rlim.Limit(5000, 3600)),
+        Operation.patch_replay: (rlim.Rate(4), rlim.Limit(5000, 3600)),
+        Operation.download_replay: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.create_group: (rlim.Rate(4), rlim.Limit(5000, 3600)),
+        Operation.list_groups: (rlim.Rate(4), rlim.Limit(2000, 3600)),
+        Operation.get_group: (rlim.Rate(4), rlim.Limit(5000, 3600)),
+        Operation.delete_group: (rlim.Rate(4), rlim.Limit(5000, 3600)),
+        Operation.patch_group: (rlim.Rate(4), rlim.Limit(5000, 3600))
     }
     gold={
-        Operation.list_replays: (2, 1000, 3600),
-        Operation.get_replay: (2, 2000, 3600),
-        Operation.delete_replay: (2, 2000, 3600),
-        Operation.patch_replay: (2, 2000, 3600),
-        Operation.download_replay: (2, 400, 3600),
-        Operation.create_group: (2, 2000, 3600),
-        Operation.list_groups: (2, 1000, 3600),
-        Operation.get_group: (2, 2000, 3600),
-        Operation.delete_group: (2, 2000, 3600),
-        Operation.patch_group: (2, 2000, 3600)
+        Operation.list_replays: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.get_replay: (rlim.Rate(2), rlim.Limit(2000, 3600)),
+        Operation.delete_replay: (rlim.Rate(2), rlim.Limit(2000, 3600)),
+        Operation.patch_replay: (rlim.Rate(2), rlim.Limit(2000, 3600)),
+        Operation.download_replay: (rlim.Rate(2), rlim.Limit(400, 3600)),
+        Operation.create_group: (rlim.Rate(2), rlim.Limit(2000, 3600)),
+        Operation.list_groups: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.get_group: (rlim.Rate(2), rlim.Limit(2000, 3600)),
+        Operation.delete_group: (rlim.Rate(2), rlim.Limit(2000, 3600)),
+        Operation.patch_group: (rlim.Rate(2), rlim.Limit(2000, 3600))
     }
     regular={
-        Operation.list_replays: (2, 500, 3600),
-        Operation.get_replay: (2, 1000, 3600),
-        Operation.delete_replay: (2, 1000, 3600),
-        Operation.patch_replay: (2, 1000, 3600),
-        Operation.download_replay: (1, 200, 3600),
-        Operation.create_group: (2, 1000, 3600),
-        Operation.list_groups: (2, 500, 3600),
-        Operation.get_group: (2, 1000, 3600),
-        Operation.delete_group: (2, 1000, 3600),
-        Operation.patch_group: (2, 1000, 3600)
+        Operation.list_replays: (rlim.Rate(2), rlim.Limit(500, 3600)),
+        Operation.get_replay: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.delete_replay: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.patch_replay: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.download_replay: (rlim.Rate(2), rlim.Limit(200, 3600)),
+        Operation.create_group: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.list_groups: (rlim.Rate(2), rlim.Limit(500, 3600)),
+        Operation.get_group: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.delete_group: (rlim.Rate(2), rlim.Limit(1000, 3600)),
+        Operation.patch_group: (rlim.Rate(2), rlim.Limit(1000, 3600))
     }
     none=regular
 
