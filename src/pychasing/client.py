@@ -16,6 +16,7 @@ import httpprep
 import typing
 import prepr
 import rlim
+import io
 
 try:
     from typing import Literal
@@ -126,9 +127,8 @@ class Client:
             _print_error(response)
         return response
 
-    def upload_replay(self, file: typing.BinaryIO,
-                      visibility: typing.Union[str, enums.Visibility],
-                      *, group: str  = ...,
+    def upload_replay(self, file: io.BufferedReader,
+                      visibility: typing.Union[str, enums.Visibility], *, group: str  = ...,
                       print_error: bool = True) -> requests.Response:
         """Upload a replay to https://ballchasing.com.
 

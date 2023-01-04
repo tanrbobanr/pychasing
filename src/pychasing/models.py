@@ -9,6 +9,9 @@ __license__ = "MIT License"
 __copyright__ = "Copyright (c) 2022-present Tanner B. Corcoran"
 
 
+import io
+
+
 class Date(str):
     """A string that is formatted as an RFC3339 datetime upon instantiation.
 
@@ -31,3 +34,20 @@ class Date(str):
         return (f"{year}-{month:02}-{day:02}T{hour!=... and hour or 0:02}:"
                 f"{minute!=... and minute or 0:02}:"
                 f"{second!=... and second or 0:02}Z")
+
+
+class ReplayBuffer(io.BufferedReader):
+    """An object that can be used to store a replay file in-memory before uploading.
+    
+    """
+    def __init__(self, name: str, raw: bytes = ..., buffer_size: int = ...) -> None:
+        self._name = name
+        if raw == ...:
+            self._buffer = io.BytesIO()
+        else:
+            self._buffer = io.BytesIO(raw)
+        super().__init__(self._buffer, buffer_size)
+    
+    @property
+    def name(self) -> str:
+        return self._name
