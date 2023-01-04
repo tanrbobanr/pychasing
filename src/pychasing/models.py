@@ -46,7 +46,10 @@ class ReplayBuffer(io.BufferedReader):
             self._buffer = io.BytesIO()
         else:
             self._buffer = io.BytesIO(raw)
-        super().__init__(self._buffer, buffer_size)
+        if buffer_size == ...:
+            super().__init__(self._buffer)
+        else:
+            super().__init__(self._buffer, buffer_size)
     
     @property
     def name(self) -> str:
