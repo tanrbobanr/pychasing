@@ -38,16 +38,17 @@ classifiers = [
 	"Programming Language :: Python :: 3.12",
 	
 	# topic(s)
-	"Software Development",
-	"Software Development :: Libraries",
-	"Software Development :: Libraries :: Python Modules",
-	"Typing :: Typed",
+	"Topic :: Software Development",
+	"Topic :: Software Development :: Libraries",
+	"Topic :: Software Development :: Libraries :: Python Modules",
 	"Topic :: Utilities",
+
+	# misc
+	"Typing :: Typed",
 ]
 dependencies = [
     "requests >= 2.27.1",
     "http-prep >= 0.0.6",
-    "prepr >= 0.0.6",
     "rlim >= 0.0.2",
 ]
 
