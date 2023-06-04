@@ -23,3 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed the use of the `prepr` module, as it was essentially unused throughout the entire module.
+
+## [0.1.8] - 2023-06-04
+
+### Changed
+
+- `Client.__init__` no longer requires the `auto_rate_limit` and `patreon_tier` arguments to be instantiated (defaults are `True` and `PatreonTier.none` respectively).
+- `patreon_tier` in `Client.__init__` now allows for strings to be used in addition to the dedicated enum.

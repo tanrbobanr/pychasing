@@ -32,8 +32,8 @@ class Date(str):
     def __new__(cls: "Date", year: int, month: int, day: int, hour: int = ...,
                 minute: int = ..., second: int = ...) -> "Date":
         return (f"{year}-{month:02}-{day:02}T{hour!=... and hour or 0:02}:"
-                f"{minute!=... and minute or 0:02}:"
-                f"{second!=... and second or 0:02}Z")
+                f"{minute != ... and minute or 0:02}:"
+                f"{second != ... and second or 0:02}Z")
 
 
 class ReplayBuffer(io.BufferedReader):

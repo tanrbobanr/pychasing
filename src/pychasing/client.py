@@ -71,7 +71,8 @@ class Client:
     """The main class used to interact with the Ballchasing API.
     
     """
-    def __init__(self, token: str, auto_rate_limit: bool, patreon_tier: enums.PatreonTier,
+    def __init__(self, token: str, auto_rate_limit: bool = True,
+                 patreon_tier: Union[str, enums.PatreonTier] = enums.PatreonTier.none,
                  rate_limit_safe_start: bool = False) -> None:
         """
         Arguments
@@ -81,14 +82,20 @@ class Client:
         auto_rate_limit : bool
             If `True`, the client will automatically limit API calls according to the given Patreon
             tier.
-        patreon_tier : enums.PatreonTier
+        patreon_tier : enums.PatreonTier or str, optional, default=PatreonTier.none
             The token-holder's Ballchasing Patreon tier.
         rate_limit_safe_start : bool, optional, default=False
             If `True`, the rate limiter will start out as fully maxed out on API calls.
 
         """
-        
+
         self._token = token
+        if isinstance(patreon_tier, str):
+            try:
+                patreon_tier = enums.PatreonTier[patreon_tier]
+            except KeyError as exc:
+                raise ValueError(f"{patreon_tier!r} is not a valid PatreonTier") from exc
+            
         if auto_rate_limit:
             for k, v in patreon_tier.value.items():
                 rlim.set_rate_limiter(getattr(self, k.name),
