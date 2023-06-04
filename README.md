@@ -1,8 +1,13 @@
 A full-functionality wrapper for the https://ballchasing.com API.
+
 # Install
-`pip install pychasing`
+
+`$ pip install pychasing`
+
 # The pychasing Client
+
 The `pychasing.Client` class is the main object used to interact with the Ballchasing API.
+
 ```py
 import pychasing
 
@@ -12,6 +17,7 @@ pychasing_client = pychasing.Client(
     patreon_tier=pychasing.PatreonTier.none # same as "regular"
 )
 ```
+
 Before we get into the methods of `Client`, there are a few things to note about rate limit handling. If `auto_rate_limit` is set to `False`, any request you make will be immediately sent to the ballchasing API. If `auto_rate_limit` is set to `True`, the client will automatically limit the rate of your requests, taking into account both hourly quota and burst limit. This is done through `time.sleep`, so how long it takes to get a response from a given method will depend on how often you are using the API, as well as your Ballchasing Patreon tier. Additionally, there is a `rate_limit_safe_start` option; if this option is set to `True`, the rate limiting will start off as already maxed out on API calls. This prevents any issues from arising if you are reinstantiating the client often (e.g. if you are testing by running a script multiple times). If this option is set to `False`, the rate limiter will assume that you haven't made any API calls in the past hour, and will rate limit accordingly. For long-running programs and use a single client instance, this option isn't necessarily needed, but I would always recommend it be enabled.
 
 The `pychasing.Client` object has the below methods:
@@ -47,7 +53,9 @@ The `pychasing.Client` object has the below methods:
 - `get_timeline` - get basic timeline data of a specific replay.
     - NOTE: this functionality is highly experimental. It accesses a back-end API used for populating site data (that notably does not require authorization headers). At any time, this API could become restricted or its functionality could change.
 - `export_csv` - get group statistics formatted as semi-colon-separated values.
+
 # Enums and other types
+
 Many of the methods in `Client` can use custom enumerations for ease of use. For example, when setting the visibility of a replay through `Client.patch_replay`, you could set `visibility` to `"unlisted"` *or* `Visibility.unlisted`. These Enums are listed below:
 - `pychasing.Rank` - used for `min_rank` and `max_rank` in `list_replays`
 - `pychasing.Playlist` - used for `playlists` in `list_replays`
@@ -63,7 +71,8 @@ Many of the methods in `Client` can use custom enumerations for ease of use. For
 - `pychasing.GroupStats` - used for `stat` in `export_csv`
 - `pychasing.PatreonTier` - used in the initialization of `Client`. This is the only exception to the aforementioned "str or enum" rule above; the proper initialization of `Client` **requires** the `PatreonTier` enum.
 
-Additionally, all date parameters (which require an RFC3339 formatted datetime) also accept a `pychasing.Date`. The usage of the class is as follows:
+Additionally, all date parameters (which require an RFC3339 formatted datetime) also accept a `pychasing.Date`. For example:
+
 ```py
 ...list_replays(created_before="2022-11-22T05:00:30Z")
 ...list_replays(created_before=pychasing.Date(2022, 11, 22, 5, 0, 30)) 

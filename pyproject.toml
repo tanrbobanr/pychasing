@@ -3,18 +3,46 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
+# [project] spec: https://peps.python.org/pep-0621/#details
 name = "pychasing"
-version = "0.1.6"
+description = "Short description"
+version = "0.1.7"
+license = {file = "LICENSE"}
+readme = "README.md"
+keywords = ["a", "b", "c"]
 authors = [
     { name = "Tanner B. Corcoran", email = "tannerbcorcoran@gmail.com" },
 ]
-description = "A full-functionality wrapper for the https://ballchasing.com API"
-readme = "README.md"
 requires-python = ">=3.7"
+# classifiers spec: https://pypi.org/classifiers/
 classifiers = [
-    "Programming Language :: Python :: 3",
+	# development status
+	"Development Status :: 5 - Production/Stable",
+	
+	# intended audience(s)
+	"Intended Audience :: Developers",
+	
+	# license
     "License :: OSI Approved :: MIT License",
+	
+	# operating system
     "Operating System :: OS Independent",
+	
+	# language(s)
+    "Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.7",
+	"Programming Language :: Python :: 3.8",
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
+	
+	# topic(s)
+	"Software Development",
+	"Software Development :: Libraries",
+	"Software Development :: Libraries :: Python Modules",
+	"Typing :: Typed",
+	"Topic :: Utilities",
 ]
 dependencies = [
     "requests >= 2.27.1",
@@ -24,4 +52,6 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/tanrbobanr/pychasing"
+repository = "https://github.com/tanrbobanr/pychasing"
+documentation = "https://github.com/tanrbobanr/pychasing/blob/main/README.md"
+changelog = "https://github.com/tanrbobanr/pychasing/blob/main/changelog.md"
