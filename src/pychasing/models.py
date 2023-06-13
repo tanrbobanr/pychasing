@@ -27,7 +27,7 @@ class Date(str):
         hour : int, optional, default=0
         minute : int, optional, default=0
         second : int, optional, default=0
-        
+
         """
     def __new__(cls: "Date", year: int, month: int, day: int, hour: int = ...,
                 minute: int = ..., second: int = ...) -> "Date":
@@ -38,7 +38,7 @@ class Date(str):
 
 class ReplayBuffer(io.BufferedReader):
     """An object that can be used to store a replay file in-memory before uploading.
-    
+
     """
     def __init__(self, name: str, raw: bytes = ..., buffer_size: int = ...) -> None:
         self._name = name
@@ -50,7 +50,7 @@ class ReplayBuffer(io.BufferedReader):
             super().__init__(self._buffer)
         else:
             super().__init__(self._buffer, buffer_size)
-    
+
     @property
     def name(self) -> str:
         return self._name
