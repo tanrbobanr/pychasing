@@ -16,7 +16,6 @@ import httpprep
 import urllib.parse
 import rlim
 import io
-import re
 
 try:
     from typing import Literal
@@ -62,6 +61,20 @@ def p(v):
 
     """
     return v if v == ... or isinstance(v, str) else v.value
+
+
+def _extract_query_parameter(url: str, parameter: str):
+    parsed_params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+    return parsed_params[parameter][0]
+
+
+def _extract_after_query_parameter(next_url: str = ...):
+    if next_url == ...:
+        return next_url
+    try:
+        return _extract_query_parameter(next_url, "after")
+    except Exception as e:
+        raise ValueError(f"'next_url' string has an unknown structure {e}")
 
 
 class Client:
@@ -264,13 +277,6 @@ class Client:
         prepped_headers = httpprep.Headers()
         prepped_headers.Authorization = self._token
 
-        # prepare url
-        if next_url != ...:
-            try:
-                next_uri = urllib.parse.unquote(re.search(r"(?<=after=)[^\&]*", next_uri).group())
-            except Exception:
-                raise ValueError("'next_uri' string has an unknown structure")
-
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing",
                                    top_level_domain="com", path_segments=["api", "replays"])
         prepped_url.components.queries[
@@ -292,7 +298,7 @@ class Client:
             "sort-by",
             "sort-dir"
         ] = [
-            next_url,
+            _extract_after_query_parameter(next_url),
             title,
             p(season),
             p(match_result),
@@ -591,13 +597,6 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # prepare url
-        if next_url != ...:
-            try:
-                next_url = urllib.parse.unquote(re.search(r"(?<=after=)[^\&]*", next_url).group())
-            except Exception:
-                raise ValueError("'next_url' string has an unknown structure")
-
-        # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing",
                                     top_level_domain="com", path_segments=["api", "groups"])
         prepped_url.components.queries[
@@ -611,7 +610,7 @@ class Client:
             "sort-by",
             "sort-dir"
         ] = [
-            next_url,
+            _extract_after_query_parameter(next_url),
             name,
             creator,
             group,
