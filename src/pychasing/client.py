@@ -30,9 +30,6 @@ from typing import (
 )
 
 
-cont_pat = re.compile(r"(?<=\after=)[^\&]*")
-
-
 def _print_error(response: requests.Response) -> None:
     """Print out an error code from a `requests.Response` if an HTTP error is
     encountered.
@@ -170,7 +167,7 @@ class Client:
         return response
 
     @rlim.placeholder
-    def list_replays(self, *, next: str = ..., title: str = ..., player_names: Iterable[str] = ...,
+    def list_replays(self, *, next_url: str = ..., title: str = ..., player_names: Iterable[str] = ...,
                      player_ids: Iterable[Tuple[Union[enums.Platform, str], Union[int, str]]] = ...,
                      playlists: Iterable[Union[enums.Playlist, str]] = ...,
                      season: Union[str, enums.Season] = ...,
@@ -190,7 +187,7 @@ class Client:
 
         Parameters
         ----------
-        next : str, optional
+        next_url : str, optional
             A continuation URL (which can be acquired with
             `<response from list_replays>.json()["next"]`). If defined, the original parameters are
             still required to get the expected result.
@@ -268,11 +265,11 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # prepare url
-        if next != ...:
+        if next_url != ...:
             try:
-                next = urllib.parse.unquote(re.search(r"(?<=after=)[^\&]*", next).group())
+                next_uri = urllib.parse.unquote(re.search(r"(?<=after=)[^\&]*", next_uri).group())
             except Exception:
-                raise ValueError("'next' string has an unknown structure")
+                raise ValueError("'next_uri' string has an unknown structure")
 
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing",
                                    top_level_domain="com", path_segments=["api", "replays"])
@@ -295,7 +292,7 @@ class Client:
             "sort-by",
             "sort-dir"
         ] = [
-            next,
+            next_url,
             title,
             p(season),
             p(match_result),
@@ -534,7 +531,7 @@ class Client:
         return response
 
     @rlim.placeholder
-    def list_groups(self, *, next: str = ..., name: str = ..., creator: Union[str, int] = ...,
+    def list_groups(self, *, next_url: str = ..., name: str = ..., creator: Union[str, int] = ...,
                     group: str = ..., created_before: Union[models.Date, str] = ...,
                     created_after: Union[models.Date, str] = ..., count: int = ...,
                     sort_by: Union[str, enums.GroupSortBy] = ...,
@@ -545,9 +542,9 @@ class Client:
 
         Parameters
         ----------
-        next : str, optional
+        next_url : str, optional
             A continuation URL (which can be acquired with
-            `<response from list_groups>.json()["next"]`). If defined, the original parameters are
+            `<response from list_groups>.json()["next_url"]`). If defined, the original parameters are
             still required to get the expected result.
         name : str, optional
             Only include groups whose title contains the given text.
@@ -594,11 +591,11 @@ class Client:
         prepped_headers.Authorization = self._token
 
         # prepare url
-        if next != ...:
+        if next_url != ...:
             try:
-                next = urllib.parse.unquote(re.search(r"(?<=after=)[^\&]*", next).group())
+                next_url = urllib.parse.unquote(re.search(r"(?<=after=)[^\&]*", next_url).group())
             except Exception:
-                raise ValueError("'next' string has an unknown structure")
+                raise ValueError("'next_url' string has an unknown structure")
 
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing",
@@ -614,7 +611,7 @@ class Client:
             "sort-by",
             "sort-dir"
         ] = [
-            next,
+            next_url,
             name,
             creator,
             group,
