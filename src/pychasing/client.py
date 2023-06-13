@@ -36,7 +36,7 @@ cont_pat = re.compile(r"(?<=\after=)[^\&]*")
 def _print_error(response: requests.Response) -> None:
     """Print out an error code from a `requests.Response` if an HTTP error is
     encountered.
-    
+
     """
     error_side = ("Client" if 400 <= response.status_code < 500 else "Server"
                   if 500 <= response.status_code < 600 else None)
@@ -55,21 +55,21 @@ def _print_error(response: requests.Response) -> None:
         error_description = ""
         if response_json and "error" in response_json:
             error_description = "(" + response_json["error"] + ") "
-            
+
         print(f"\033[93m{response.status_code} {error_side} Error: {reason} "
               f"{error_description}for url: {response.url}\033[0m")
 
 
 def p(v):
     """Return `v` if `v` is `...` or a `str`, else return `v.value`.
-    
+
     """
     return v if v == ... or isinstance(v, str) else v.value
 
 
 class Client:
     """The main class used to interact with the Ballchasing API.
-    
+
     """
     def __init__(self, token: str, auto_rate_limit: bool = True,
                  patreon_tier: Union[str, enums.PatreonTier] = enums.PatreonTier.none,
@@ -95,12 +95,12 @@ class Client:
                 patreon_tier = enums.PatreonTier[patreon_tier]
             except KeyError as exc:
                 raise ValueError(f"{patreon_tier!r} is not a valid PatreonTier") from exc
-            
+
         if auto_rate_limit:
             for k, v in patreon_tier.value.items():
                 rlim.set_rate_limiter(getattr(self, k.name),
                                       rlim.RateLimiter(*v, safestart=rate_limit_safe_start))
-    
+
     def ping(self, *, print_error: bool = True) -> requests.Response:
         """Ping the https://ballchasing.com servers.
 
@@ -109,12 +109,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare URL
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -123,7 +123,7 @@ class Client:
         # prepare headers
         prepped_headers = httpprep.Headers()
         prepped_headers.Authorization = self._token
-        
+
         # make request, print error, and return response
         response = requests.get(prepped_url.build(), headers=prepped_headers.format_dict())
         if print_error:
@@ -146,12 +146,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare URL
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -161,7 +161,7 @@ class Client:
         # prepare headers
         prepped_headers = httpprep.Headers()
         prepped_headers.Authorization = self._token
-        
+
         # make request, print error, and return response
         response = requests.post(prepped_url.build(query_check=...),
                                  headers=prepped_headers.format_dict(), files={"file":file})
@@ -239,7 +239,7 @@ class Client:
             Only include replays played after a given date, formatted as an
             RFC3339 datetime string.
         count : int, optional, default=150
-            The number of replays returned. Must be between 1 and 200 
+            The number of replays returned. Must be between 1 and 200
             (inclusive) if defined.
         sort_by : str or ReplaySortBy, optional, default=
         ReplaySortBy.upload_date
@@ -249,16 +249,16 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         Raises:
             ValueError: `count` is defined and is less than 0 or greater than
             200.
-        
+
         """
         if count != ... and 1 > count > 200:
             raise ValueError("\"count\" must be between 1 and 200")
@@ -329,7 +329,7 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
+
     @rlim.placeholder
     def get_replay(self, replay_id: str, *, print_error: bool = True) -> requests.Response:
         """Get more in-depth information for a specific replay.
@@ -341,12 +341,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -361,7 +361,7 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
+
     @rlim.placeholder
     def delete_replay(self, replay_id: str, *, print_error: bool = True) -> requests.Response:
         """Delete the given replay from https://ballchasing.com, so long as the
@@ -374,12 +374,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -394,7 +394,7 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
+
     @rlim.placeholder
     def patch_replay(self, replay_id: str, *, title: str = ...,
                      visibility: Union[str, enums.Visibility] = ..., group: str = ...,
@@ -417,12 +417,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -454,7 +454,7 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Warnings
         --------
         Replay files can be rather large (up to around 1.5mb). The HTTP request
@@ -465,7 +465,7 @@ class Client:
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -509,7 +509,7 @@ class Client:
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -532,7 +532,7 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
+
     @rlim.placeholder
     def list_groups(self, *, next: str = ..., name: str = ..., creator: Union[str, int] = ...,
                     group: str = ..., created_before: Union[models.Date, str] = ...,
@@ -580,15 +580,15 @@ class Client:
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         Raises:
             ValueError: `count` is defined and is less than 0 or greater than
             200.
-        
+
         """
         if count != ... and 1 > count > 200:
             raise ValueError("\"count\" must be between 1 and 200")
-        
+
         # prepare headers
         prepped_headers = httpprep.Headers()
         prepped_headers.Authorization = self._token
@@ -620,7 +620,7 @@ class Client:
             group,
             created_before,
             created_after,
-            count, 
+            count,
             p(sort_by),
             p(sort_dir)
         ]
@@ -644,12 +644,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -664,7 +664,7 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
+
     def delete_group(self, group_id: str, *, print_error: bool = True) -> requests.Response:
         """Delete a specific group (and all children groups) from
         https://ballchasing.com, so long as it is owned by the token holder.
@@ -676,12 +676,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -696,7 +696,7 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
+
     @rlim.placeholder
     def patch_group(self, group_id: str, *,
                     player_identification: Union[str, enums.PlayerIdentification] = ...,
@@ -726,12 +726,12 @@ class Client:
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
             The `requests.Response` object returned from the HTTP request.
-        
+
         """
         # prepare url
         prepped_url = httpprep.URL(protocol="https", domain="ballchasing", top_level_domain="com",
@@ -754,16 +754,16 @@ class Client:
         if print_error:
             _print_error(response)
         return response
-    
+
     def maps(self, *, print_error: bool = True) -> requests.Response:
         """Get a list of current maps.
-        
+
         Parameters
         ----------
         print_error : bool, optional, default=True
             Prints an error message (that contains information about the error) if the request
             resulted in an HTTP error (i.e. status codes 400 through 599).
-        
+
         Returns
         -------
         requests.Response
